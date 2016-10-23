@@ -1,0 +1,107 @@
+\documentclass{article}
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+<<>>=
+library(psych)
+library(readxl)
+library(dplyr)
+library(stringr)
+library(ggplot2)
+library(plyr)
+@
+
+<<>>=
+hms1 <- read.csv("HMS raw data 2016.csv")
+hms<-data.frame(hms1)
+save(hms,file = "HMS raw data 2016.rda")
+
+row.names(hms) <- hms$responseid
+
+key <- unlist(lapply(strsplit(names(hms), split="_"),function(x){x[1]}))
+
+# function to create data.frame
+pullout <- function(x){
+  df = as.data.frame(hms[,grep(x,key)])
+  colnames(df) = names(hms)[grep(x,key)]
+  rownames(df) = rownames(hms)  # if not defined, single column section will lose row names.
+  assign(x, df, envir=.GlobalEnv)
+}
+
+invisible(lapply(unique(key),pullout))
+
+@
+
+<<>>=
+race <- hms[15:23]
+text <- unique(race$race_other_text)
+text_asian_indicator <- c(3,9,14,15,16,18,21,29,32,34,39,42,45,50,58,68,73,75,76,79,80)
+text_biracial_indicator <- c(24, 30,40,41,44,55,74)
+text_black_indicator <- c(6)
+text_asian <- text[text_asian_indicator]
+text_biracial <- text[text_biracial_indicator]
+text_black <- text[text_black_indicator]
+
+
+race$race_cleaned[race$race_white == 1] <- "white"
+race$race_cleaned[race$race_asian == 1 | race$race_other_text %in% text_asian] <- "asian"
+race$race_cleaned[race$race_black == 1 | race$race_other_text %in% text_black] <- "black"
+race$race_cleaned[rowSums(race[1:7], na.rm = TRUE) ==2 | race$race_other_text %in% text_biracial] <- "biracial"
+race$race_cleaned[race$race_ainaan == 1 | race$race_mides == 1] <- "other"
+race$race_cleaned[is.na(race$race_cleaned) & race$race_other == 1] <- "other"
+
+@
+
+<<>>=
+# 2. academic status
+educ <- hms[41:48]
+
+educ$aca_status[educ$degree_bach == 1] <- "undergraduate"
+educ$aca_status[rowSums(educ[2:5], na.rm = TRUE) >= 1] <- "graduate"
+
+#dealing with text column
+other <- educ %>% filter(degree_other == 1 & !is.na(degree_other_text))
+other_text <- as.vector(unique(other$degree_other_text)) #looking for unique text entries in "degree_other" column
+other_text_indicator <- c(T, T, T, F, F, F, T, T, T, T, T, T, T, T, T, T, F, F, F, T, T, T, F, F, T, F, F, F, T, T, F)
+grad <- other_text[other_text_indicator] # 19 total entries that should be categorized as grad 
+educ$aca_status[educ$degree_other_text %in% grad] <- "graduate"
+
+educ$aca_status[is.na(educ$aca_status) & educ$degree_other == 1 & !is.na(educ$degree_other_text)] <- "other"
+@
+
+<<>>=
+#gender: merged in to 4 categories 
+gender <- hms$gender
+gender[gender == 1] <- "male"
+gender[gender == 2] <- "female"
+gender[gender == 3 | gender == 4] <- "trans gender"
+gender[gender == 5 | gender == 6] <- "other"
+
+@
+
+<<>>=
+#citizen
+citizenship <- hms$citizen
+citizenship[citizenship == 1] <- "domestic"
+citizenship[citizenship == 0] <- "international"
+
+@
+
+<<>>=
+#the four columns
+demographics <- data.frame(citizenship, gender, educ$aca_status, race$race_cleaned)
+names(demographics) <- c("citizenship", "gender", "aca_status", "race")
+@
+
+<<>>=
+belong<-data.frame(c(belong1,belong2,belong3,belong4,belong5,belong6,belong7,belong8,belong9))
+st_promote<-st$st_promote
+perceptions<-data.frame(mh,cli,admin,env,st_promote)
+divers_discrim<-data.frame(c(divers,discrim))
+
+boxplot(race_cleaned,discrim)
+@
+
+
+\end{document}
