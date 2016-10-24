@@ -32,22 +32,28 @@ pullout <- function(x){
 
 invisible(lapply(unique(key),pullout))
 
+
 @
 
 <<>>=
-#race_cleaned
-race$race_cleaned <- c(NA) #new race column 
-for (i in 1:2551) {
-  if (rowsumm[i] == 1){
-    racelist <- names(race[1:7])
-    racelist <- str_replace(racelist, "race_", "")
-    race$race_cleaned[i] <- racelist[which(race[i,1:7] == 1)]
-  } else if (rowsumm[i] == 2) {
-    race$race_cleaned[i] <- "biracial"
-  } else {
-    race$race_cleaned[i] <- "other"
-  }
-}
+race <- hms[15:23]
+text <- unique(race$race_other_text)
+text_asian_indicator <- c(3,9,14,15,16,18,21,29,32,34,39,42,45,50,58,68,73,75,76,79,80)
+text_biracial_indicator <- c(24, 30,40,41,44,55,74)
+text_black_indicator <- c(6)
+text_asian <- text[text_asian_indicator]
+text_biracial <- text[text_biracial_indicator]
+text_black <- text[text_black_indicator]
+
+
+race$race_cleaned[race$race_white == 1] <- "white"
+race$race_cleaned[race$race_asian == 1 | race$race_other_text %in% text_asian] <- "asian"
+race$race_cleaned[race$race_black == 1 | race$race_other_text %in% text_black] <- "black"
+race$race_cleaned[rowSums(race[1:7], na.rm = TRUE) ==2 | race$race_other_text %in% text_biracial] <- "biracial"
+race$race_cleaned[race$race_ainaan == 1 | race$race_mides == 1] <- "other"
+race$race_cleaned[is.na(race$race_cleaned) & race$race_other == 1] <- "other"
+
+@
 
 @
 
@@ -91,13 +97,19 @@ citizenship[citizenship == 0] <- "international"
 #the four columns
 demographics <- data.frame(citizenship, gender, educ$aca_status, race$race_cleaned)
 names(demographics) <- c("citizenship", "gender", "aca_status", "race")
+
+save.image("allColumn.RData")
 @
 
+
 <<>>=
+load("allColumn.RData")
 belong<-data.frame(c(belong1,belong2,belong3,belong4,belong5,belong6,belong7,belong8,belong9))
 st_promote<-st$st_promote
 perceptions<-data.frame(mh,cli,admin,env,st_promote)
 divers_discrim<-data.frame(c(divers,discrim))
+
+boxplot(belong$belong1,belong$belong2,belong$belong3,belong$belong4,belong$belong5, belong$belong6,belong$belong7)
 
 @
 
@@ -147,13 +159,20 @@ ggplot(dis_avg,aes(x=Race,y=DiscrimAvg))+geom_point(aes(size=3))+ggtitle("Discri
 #data.frame(Race,discrim)
 #tapply(dis$race_cleaned,dis$race_cleaned,length)
 
+save.image("dis.RData")
 @
 
 <<>>=
-#dis_female<-dis$discrim %>% filter(dis$gender=="female")
-#dis_male<-dis$discrim %>% filter(dis$gender=="male")
-#dis_trans<-dis$discrim %>% filter(dis$gender=="trans gender")
-#dis_other<-dis$discrim %>% filter(dis$gender=="other")
+load("dis.Rdata")
+dis_female<-dis %>% filter(dis$gender=="female")
+dis_male<-dis %>% filter(dis$gender=="male")
+dis_trans<-dis %>% filter(dis$gender=="trans gender")
+dis_other<-dis %>% filter(dis$gender=="other")
+
+Dis_Gender<-data.frame(c(dis_female$discrim, dis_male$discrim, dis_trans$discrim, dis_other$discrim))
+gender_c <-data.frame(c("Female","Male","Transgender","Other"))
+
+boxplot(Dis_Gender)
 @
 
 <<>>=
@@ -172,14 +191,26 @@ Transgender definitely witnesses higher levels of discrimination comparatively
 
 <<>>=
 MH_all<-na.omit(data.frame(demographics,anx$anx_score,deprawsc,belong))
-belongP<-rowSums(MH_all[7:13])
-belongN<-rowSums(MH_all[14:15])
+belongP<-rowSums(MH_all[7:13])#-mean(rowSums(MH_all[7:13]))
+belongN<-rowSums(MH_all[14:15])#-mean(rowSums(MH_all[14:15]))
+
+belongTotal<-data.frame(MH_all,belongP,belongN)
+anxScore<-MH$anx.anx_score-mean(MH$anx.anx_score)
+
 
 MH<-data.frame(MH_all,belongP,belongN)
-ggplot(MH,aes(x=MH$belongP,y=MH$anx_score))+geom_point()+ggtitle("Positive Campus Involvement vs Anxiety")
-ggplot(MH,aes(x=MH$belongN,y=MH$anx_score))+geom_point(aes(size=1))+ggtitle("Negative Campus Involvement vs Anxiety")
-ggplot(MH, aes(x=MH$belongP,y=MH$deprawsc))+geom_point(aes(size=1))+ggtitle( "Positive Campus Involvement vs Depression")
+ggplot(MH,aes(x=MH$belongP,y=anxScore,color=MH$aca_status))+geom_point()+ggtitle("Positive Campus Involvement vs Anxiety")+stat_smooth(method=lm)+facet_grid( .~race, scales="fixed", labeller= label_both)
+
+ggplot(MH,aes(x=MH$belongP,y=anxScore,color=MH$aca_status))+geom_point()+ggtitle("Positive Campus Involvement vs Anxiety")+stat_smooth(method=lm)+facet_grid( .~citizenship, scales="fixed", labeller= label_both)
+
+ggplot(MH,aes(x=MH$belongN,y=anxScore,color=MH$aca_status))+ggtitle("Negative Campus Involvement vs Anxiety")+geom_point()+stat_smooth(method=lm)+facet_grid( .~citizenship, scales="fixed", labeller= label_both)
+
+ggplot(MH, aes(x=MH$belongP,y=MH$deprawsc,color=MH$aca_status))+geom_point(aes())+ggtitle( "Positive Campus Involvement vs Depression")+stat_smooth(method=lm)+facet_grid( .~citizenship, scales="fixed", labeller= label_both)
+
 ggplot(MH, aes(x=MH$belongN,y=MH$deprawsc))+geom_point(aes(size=1))+ggtitle("Negtive Campus Invovlemetn vs Depression")
+
+ggplot(MH,aes(x=MH$belong8,y=MH$anx.anx_score))+geom_point()+ggtitle("Positive Campus Involvement vs Anxiety")
+
 
 plot(x=MH$belongP)
 
@@ -187,24 +218,7 @@ ggplot(MH,aes(x=race,y=MH$anx_score))
 @
 
 <<>>=
-race <- hms[15:23]
-text <- unique(race$race_other_text)
-text_asian_indicator <- c(3,9,14,15,16,18,21,29,32,34,39,42,45,50,58,68,73,75,76,79,80)
-text_biracial_indicator <- c(24, 30,40,41,44,55,74)
-text_black_indicator <- c(6)
-text_asian <- text[text_asian_indicator]
-text_biracial <- text[text_biracial_indicator]
-text_black <- text[text_black_indicator]
 
-
-race$race_cleaned[race$race_white == 1] <- "white"
-race$race_cleaned[race$race_asian == 1 | race$race_other_text %in% text_asian] <- "asian"
-race$race_cleaned[race$race_black == 1 | race$race_other_text %in% text_black] <- "black"
-race$race_cleaned[rowSums(race[1:7], na.rm = TRUE) ==2 | race$race_other_text %in% text_biracial] <- "biracial"
-race$race_cleaned[race$race_ainaan == 1 | race$race_mides == 1] <- "other"
-race$race_cleaned[is.na(race$race_cleaned) & race$race_other == 1] <- "other"
-
-@
 
 <<>>=
 
