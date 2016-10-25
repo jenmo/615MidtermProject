@@ -55,7 +55,7 @@ race$race_cleaned[is.na(race$race_cleaned) & race$race_other == 1] <- "other"
 
 @
 
-@
+
 
 
 <<>>=
@@ -190,22 +190,39 @@ ggplot(dis_avg,aes(x=gender_c,y=DiscrimAvg))+geom_point(aes(size=3))+ggtitle("Di
 Transgender definitely witnesses higher levels of discrimination comparatively 
 
 <<>>=
+
+
 MH_all<-na.omit(data.frame(demographics,anx$anx_score,deprawsc,belong))
-belongP<-rowSums(MH_all[7:13])#-mean(rowSums(MH_all[7:13]))
-belongN<-rowSums(MH_all[14:15])#-mean(rowSums(MH_all[14:15]))
+
+
+belongP<-1/(rowSums(MH_all[7:13])-mean(rowSums(MH_all[7:13])))
+belongN<-(rowSums(MH_all[14:15])-mean(rowSums(MH_all[14:15])))
 
 belongTotal<-data.frame(MH_all,belongP,belongN)
 anxScore<-MH$anx.anx_score-mean(MH$anx.anx_score)
+
+MH_grad<-belongTotal %>% filter(MH_all$aca_status=="graduate")
+belongP<-1/(rowSums(MH_grad[7:13])-mean(rowSums(MH_grad[7:13])))
+belongN<-(rowSums(MH_grad[14:15])-mean(rowSums(MH_grad[14:15])))
+MHG<-data.frame(MH_grad,belongP,belongN)
+
+ggplot(MHG,aes(x=MHG$belongP,y=MHG$anx.anx_score))+geom_point()+ggtitle("Grad:Positive Campus Involvement vs Anxiety")+stat_smooth(method=lm)+facet_grid( .~gender, scales="fixed", labeller= label_both)
+
+ggplot(MHG,aes(x=MHG$belongN,y=MHG$anx.anx_score,size=1))+geom_point()+ggtitle("Grad:Positive Campus Involvement vs Anxiety")+stat_smooth(method=lm)+facet_grid( .~citizenship, scales="fixed", labeller= label_both)
+
+summary(regout<-lm(MHG$anx.anx_score~MHG$belongN))
+
+MH_ug<-MH_all %>% filter(MH_all$aca_status=="undergraduate")
 
 
 MH<-data.frame(MH_all,belongP,belongN)
 ggplot(MH,aes(x=MH$belongP,y=anxScore,color=MH$aca_status))+geom_point()+ggtitle("Positive Campus Involvement vs Anxiety")+stat_smooth(method=lm)+facet_grid( .~race, scales="fixed", labeller= label_both)
 
-ggplot(MH,aes(x=MH$belongP,y=anxScore,color=MH$aca_status))+geom_point()+ggtitle("Positive Campus Involvement vs Anxiety")+stat_smooth(method=lm)+facet_grid( .~citizenship, scales="fixed", labeller= label_both)
+ggplot(MH,aes(x=MH$belongP,y=anxScore,color=MH$aca_status))+geom_point()+ggtitle("Positive Campus Involvement vs Anxiety")+stat_smooth(method=lm)+facet_grid( .~citizenship, scales="fixed", labeller= label_both)+labs(y="Anxiety_Score", x="Positive Campus Involment and Environment Score")
 
 ggplot(MH,aes(x=MH$belongN,y=anxScore,color=MH$aca_status))+ggtitle("Negative Campus Involvement vs Anxiety")+geom_point()+stat_smooth(method=lm)+facet_grid( .~citizenship, scales="fixed", labeller= label_both)
 
-ggplot(MH, aes(x=MH$belongP,y=MH$deprawsc,color=MH$aca_status))+geom_point(aes())+ggtitle( "Positive Campus Involvement vs Depression")+stat_smooth(method=lm)+facet_grid( .~citizenship, scales="fixed", labeller= label_both)
+ggplot(MH, aes(x=MH$belongP,y=MH$deprawsc,color=MH$aca_status))+geom_point(aes())+ggtitle( "Positive Campus Involvement vs Depression")+stat_smooth(method=lm)+facet_grid( .~citizenship, scales="fixed", labeller= label_both)+labs(y="Depression_Score", x="Positive Campus Involvement and Environment Score")
 
 ggplot(MH, aes(x=MH$belongN,y=MH$deprawsc))+geom_point(aes(size=1))+ggtitle("Negtive Campus Invovlemetn vs Depression")
 
@@ -215,14 +232,27 @@ ggplot(MH,aes(x=MH$belong8,y=MH$anx.anx_score))+geom_point()+ggtitle("Positive C
 plot(x=MH$belongP)
 
 ggplot(MH,aes(x=race,y=MH$anx_score))
+
+ggplot(MH,aes(x=MH$belongP,y=anxScore,color=MH$aca_status))+geom_point()+ggtitle("Positive Campus Involvement vs Anxiety")+stat_smooth(method=lm)+facet_grid( .~race, scales="fixed", labeller= label_both)
+
+p<-ggplot(MH,aes(x=MH$belongP,y=anxScore))+geom_line(aes(group=MH$aca_status,alpha=0.025))
+p
+
+subplot(
+  p,ggplotly(p,tooltip="Academic Status"),
+  ggplot(txhousing,aes(x=MH$belongP,y=anxScore))+geom_bin2d(),
+  ggplot(txhousing,aes(x=MH$belongP,y=anxScore))+geom_hex(),
+  nrows=2,shareX=TRUE,shareY=TRUE,
+  titleY=FALSE, titleX=FALSE
+  
+  )
+
+d<-ggplot(MH,aes(x=MH$belongP,y=anxScore))+geom_bin2d()
+
+d
 @
 
-<<>>=
 
-
-<<>>=
-
-@
 
 
 
