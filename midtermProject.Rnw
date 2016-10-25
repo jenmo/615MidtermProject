@@ -195,7 +195,7 @@ Transgender definitely witnesses higher levels of discrimination comparatively
 MH_all<-na.omit(data.frame(demographics,anx$anx_score,deprawsc,belong))
 
 
-belongP<-1/(rowSums(MH_all[7:13])-mean(rowSums(MH_all[7:13])))
+belongP<-(rowSums(MH_all[7:13])-mean(rowSums(MH_all[7:13])))
 belongN<-(rowSums(MH_all[14:15])-mean(rowSums(MH_all[14:15])))
 
 belongTotal<-data.frame(MH_all,belongP,belongN)
