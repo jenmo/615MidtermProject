@@ -30,7 +30,7 @@ pullout <- function(x){
   assign(x, df, envir=.GlobalEnv)
 }
 
-invisible(lapply(unique(key),pullout))
+invisible(lapply(unique(key),pullout))#all columns are now grouped with based on the inital part of their column header
 
 
 @
@@ -53,6 +53,8 @@ race$race_cleaned[rowSums(race[1:7], na.rm = TRUE) ==2 | race$race_other_text %i
 race$race_cleaned[race$race_ainaan == 1 | race$race_mides == 1] <- "other"
 race$race_cleaned[is.na(race$race_cleaned) & race$race_other == 1] <- "other"
 
+#cleaning up the race column by aggregating into 5 categories and cleaning up the text by manually going through each text entry 
+
 @
 
 
@@ -73,6 +75,9 @@ grad <- other_text[other_text_indicator] # 19 total entries that should be categ
 educ$aca_status[educ$degree_other_text %in% grad] <- "graduate"
 
 educ$aca_status[is.na(educ$aca_status) & educ$degree_other == 1 & !is.na(educ$degree_other_text)] <- "other"
+
+
+#Each reponder is grouped into undergraduate, graduate and other. Academic Status was cleaned up based on the highest level of degree completed. Therefore if a responder is in a undergraduate and graduate program, he/she would count as a graduate student. 
 @
 
 <<>>=
@@ -83,6 +88,7 @@ gender[gender == 2] <- "female"
 gender[gender == 3 | gender == 4] <- "trans gender"
 gender[gender == 5 | gender == 6] <- "other"
 
+#To make future analysis easier, we combinded 6 categories of gender into 4 categories.
 @
 
 <<>>=
@@ -91,6 +97,7 @@ citizenship <- hms$citizen
 citizenship[citizenship == 1] <- "domestic"
 citizenship[citizenship == 0] <- "international"
 
+#changing the binary data into categoryical data for easier communication and understanding. 
 @
 
 <<>>=
@@ -99,6 +106,8 @@ demographics <- data.frame(citizenship, gender, educ$aca_status, race$race_clean
 names(demographics) <- c("citizenship", "gender", "aca_status", "race")
 
 save.image("allColumn.RData")
+
+#with all of the relevant demographic data cleaned, the columns are now saved in R. 
 @
 
 
@@ -109,8 +118,7 @@ st_promote<-st$st_promote
 perceptions<-data.frame(mh,cli,admin,env,st_promote)
 divers_discrim<-data.frame(c(divers,discrim))
 
-boxplot(belong$belong1,belong$belong2,belong$belong3,belong$belong4,belong$belong5, belong$belong6,belong$belong7)
-
+#looking at specific variables that I'm interested in. Putting them into dataframes for easier EDA 
 @
 
 
@@ -123,17 +131,19 @@ describe$missing=2551-n
 detach(describe)
 describe
 
+boxplot(belong$belong1,belong$belong2,belong$belong3,belong$belong4,belong$belong5, belong$belong6,belong$belong7)
 
+#Understand the central tendencies of the data, specifically the belong columns as well as the discrimination columns 
 @
 
 
-Belong8 @ 3.66 has the highest average 
-env_body@ 4.05 has too high of a score 
+#Belong8 @ 3.66 has the highest average 
+#env_body@ 4.05 has too high of a score 
 
 <<>>=
 belong_all<-data.frame(demographics,belong)
 
-dis_all<-data.frame(demographics,Module11)
+dis_all<-data.frame(Module11)
 dis<-na.omit(dis_all)
 
 dis_ainaan<-with(dis,mean(dis$discrim[dis$race=="ainaan"]))
@@ -146,8 +156,6 @@ dis_pi<-with(dis,mean(dis$discrim[dis$race=="pi"]))
 dis_biracial<-with(dis,mean(dis$discrim[dis$race=="biracial"]))
 dis_other<-with(dis,mean(dis$discrim[dis$race=="other"]))
 
-#use apply instead
-
 DiscrimAvg <- c(dis_ainaan, dis_asian, dis_black, dis_white, dis_his, dis_mides, dis_pi, dis_biracial, dis_other)
 Race <-c("Native American","Asbian","Black","White","Hispanic","Middle Eastern","PI","Biracial","Other")
 dis_avg<-data.frame(Race,DiscrimAvg)
@@ -155,24 +163,23 @@ dis_avg<-data.frame(Race,DiscrimAvg)
 head(dis_avg)
 ggplot(dis_avg,aes(x=Race,y=DiscrimAvg))+geom_point(aes(size=3))+ggtitle("DiscrimAvg by Race")
 
-
-#data.frame(Race,discrim)
-#tapply(dis$race_cleaned,dis$race_cleaned,length)
-
 save.image("dis.RData")
+
+#looking at discrimination data and the degree in which the responders have experienced or witnessed discrimination 
+#the new datafram of specifically discrimination data along with demographic data in saved into R. 
 @
 
 <<>>=
-load("dis.Rdata")
-dis_female<-dis %>% filter(dis$gender=="female")
-dis_male<-dis %>% filter(dis$gender=="male")
-dis_trans<-dis %>% filter(dis$gender=="trans gender")
-dis_other<-dis %>% filter(dis$gender=="other")
+#load("dis.Rdata")
+#dis_female<-mean(dis %>% filter(dis$gender=="female"))
+#dis_male<-mean(dis %>% filter(dis$gender=="male"))
+#dis_trans<-mean(dis %>% filter(dis$gender=="trans gender"))
+#dis_other<-mean(dis %>% filter(dis$gender=="other"))
 
-Dis_Gender<-data.frame(c(dis_female$discrim, dis_male$discrim, dis_trans$discrim, dis_other$discrim))
-gender_c <-data.frame(c("Female","Male","Transgender","Other"))
+#Dis_Gender<-data.frame(c(dis_female$discrim, dis_male$discrim, dis_trans$discrim, dis_other$discrim))
+#gender_c <-data.frame(c("Female","Male","Transgender","Other"))
 
-boxplot(Dis_Gender)
+#ggplot(dis_avg,aes(x=gender_c,y=Dis_Gender))+geom_point(aes(size=3))+ggtitle("DiscrimAvg by Gender")
 @
 
 <<>>=
@@ -189,70 +196,7 @@ ggplot(dis_avg,aes(x=gender_c,y=DiscrimAvg))+geom_point(aes(size=3))+ggtitle("Di
 @
 Transgender definitely witnesses higher levels of discrimination comparatively 
 
-<<>>=
-
-
-MH_all<-na.omit(data.frame(demographics,anx$anx_score,deprawsc,belong))
-
-
-belongP<-(rowSums(MH_all[7:13])-mean(rowSums(MH_all[7:13])))
-belongN<-(rowSums(MH_all[14:15])-mean(rowSums(MH_all[14:15])))
-
-belongTotal<-data.frame(MH_all,belongP,belongN)
-anxScore<-MH$anx.anx_score-mean(MH$anx.anx_score)
-
-MH_grad<-belongTotal %>% filter(MH_all$aca_status=="graduate")
-belongP<-1/(rowSums(MH_grad[7:13])-mean(rowSums(MH_grad[7:13])))
-belongN<-(rowSums(MH_grad[14:15])-mean(rowSums(MH_grad[14:15])))
-MHG<-data.frame(MH_grad,belongP,belongN)
-
-ggplot(MHG,aes(x=MHG$belongP,y=MHG$anx.anx_score))+geom_point()+ggtitle("Grad:Positive Campus Involvement vs Anxiety")+stat_smooth(method=lm)+facet_grid( .~gender, scales="fixed", labeller= label_both)
-
-ggplot(MHG,aes(x=MHG$belongN,y=MHG$anx.anx_score,size=1))+geom_point()+ggtitle("Grad:Positive Campus Involvement vs Anxiety")+stat_smooth(method=lm)+facet_grid( .~citizenship, scales="fixed", labeller= label_both)
-
-summary(regout<-lm(MHG$anx.anx_score~MHG$belongN))
-
-MH_ug<-MH_all %>% filter(MH_all$aca_status=="undergraduate")
-
-
-MH<-data.frame(MH_all,belongP,belongN)
-ggplot(MH,aes(x=MH$belongP,y=anxScore,color=MH$aca_status))+geom_point()+ggtitle("Positive Campus Involvement vs Anxiety")+stat_smooth(method=lm)+facet_grid( .~race, scales="fixed", labeller= label_both)
-
-ggplot(MH,aes(x=MH$belongP,y=anxScore,color=MH$aca_status))+geom_point()+ggtitle("Positive Campus Involvement vs Anxiety")+stat_smooth(method=lm)+facet_grid( .~citizenship, scales="fixed", labeller= label_both)+labs(y="Anxiety_Score", x="Positive Campus Involment and Environment Score")
-
-ggplot(MH,aes(x=MH$belongN,y=anxScore,color=MH$aca_status))+ggtitle("Negative Campus Involvement vs Anxiety")+geom_point()+stat_smooth(method=lm)+facet_grid( .~citizenship, scales="fixed", labeller= label_both)
-
-ggplot(MH, aes(x=MH$belongP,y=MH$deprawsc,color=MH$aca_status))+geom_point(aes())+ggtitle( "Positive Campus Involvement vs Depression")+stat_smooth(method=lm)+facet_grid( .~citizenship, scales="fixed", labeller= label_both)+labs(y="Depression_Score", x="Positive Campus Involvement and Environment Score")
-
-ggplot(MH, aes(x=MH$belongN,y=MH$deprawsc))+geom_point(aes(size=1))+ggtitle("Negtive Campus Invovlemetn vs Depression")
-
-ggplot(MH,aes(x=MH$belong8,y=MH$anx.anx_score))+geom_point()+ggtitle("Positive Campus Involvement vs Anxiety")
-
-
-plot(x=MH$belongP)
-
-ggplot(MH,aes(x=race,y=MH$anx_score))
-
-ggplot(MH,aes(x=MH$belongP,y=anxScore,color=MH$aca_status))+geom_point()+ggtitle("Positive Campus Involvement vs Anxiety")+stat_smooth(method=lm)+facet_grid( .~race, scales="fixed", labeller= label_both)
-
-p<-ggplot(MH,aes(x=MH$belongP,y=anxScore))+geom_line(aes(group=MH$aca_status,alpha=0.025))
-p
-
-subplot(
-  p,ggplotly(p,tooltip="Academic Status"),
-  ggplot(txhousing,aes(x=MH$belongP,y=anxScore))+geom_bin2d(),
-  ggplot(txhousing,aes(x=MH$belongP,y=anxScore))+geom_hex(),
-  nrows=2,shareX=TRUE,shareY=TRUE,
-  titleY=FALSE, titleX=FALSE
-  
-  )
-
-d<-ggplot(MH,aes(x=MH$belongP,y=anxScore))+geom_bin2d()
-
-d
-@
-
-
+"dis.RData" is the cleaned data 
 
 
 
