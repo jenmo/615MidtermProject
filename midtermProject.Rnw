@@ -3,6 +3,9 @@
 \begin{document}
 \SweaveOpts{concordance=TRUE}
 
+Abstract: By using Boston University's Healthy Minds survey, I am looking at which group experiences the most discrimination. 
+As expected, the data shows a higher percentage of people who are transgender experiencing discrimination. 
+
 <<>>=
 library(psych)
 library(readxl)
@@ -12,6 +15,7 @@ library(ggplot2)
 library(plyr)
 library(tidyr)
 @
+
 
 <<>>=
 hms1 <- read.csv("HMS raw data 2016.csv")
