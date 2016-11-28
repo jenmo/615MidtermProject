@@ -169,6 +169,7 @@ save.image("dis.RData")
 #the new datafram of specifically discrimination data along with demographic data in saved into R. 
 @
 
+Another way of filtering the data
 <<>>=
 #load("dis.Rdata")
 #dis_female<-mean(dis %>% filter(dis$gender=="female"))
@@ -198,6 +199,6 @@ Transgender definitely witnesses higher levels of discrimination comparatively
 
 "dis.RData" is the cleaned data 
 
-
+#worked with everyon in the BU Healthy Minds group 
 
 \end{document}
